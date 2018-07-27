@@ -1,0 +1,87 @@
+<link href='normalise.css' rel='stylesheet' type='text/css'>
+<link href='style.css' rel='stylesheet' type='text/css'>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<form>
+	<textarea id="emoji-text" name="emoji-text" placeholder="Type and watch your text magically become emojis"></textarea>
+</form>
+
+<script>
+	var getEmojiJson = (function() {
+        var json = null;
+        $.ajax({
+            'async': false,
+            'global': false,
+            'url': "emoji.json",
+            'dataType': "json",
+            'success': function (data) {
+                json = data;
+            }
+        });
+        return json;
+    });
+
+    var emojis = getEmojiJson();
+    var foundEmoji = 0;
+    var currentAlias = '';
+    var timeouts = [];
+
+    function stopTracked() {
+	    for(var i=0; i<timeouts.length; i++)
+	    {
+	        clearTimeout(timeouts[i]);
+	    }
+
+	    timeouts = [];
+	}
+
+    $('#emoji-text').on('keyup', function(e) {
+    	stopTracked();
+
+    	var content = $(this)[0].value;
+
+    	if(e.keyCode == 32 || e.keyCode == 49 || e.keyCode == 51 || e.keyCode == 52 || e.keyCode == 53 || e.keyCode == 54 || e.keyCode == 55 || e.keyCode == 56 || e.keyCode == 57 || e.keyCode == 48 || e.keyCode == 189 || e.keyCode == 187 || e.keyCode == 219 || e.keyCode == 220 || e.keyCode == 221 || e.keyCode == 186 || e.keyCode == 222 || e.keyCode == 188 || e.keyCode == 190 || e.keyCode == 191 || e.keyCode == 111 || e.keyCode == 187 || e.keyCode == 109 || e.keyCode == 107 || e.keyCode == 13 || e.keyCode == 192){
+	    	findEmoji(content);
+	   	}
+	   	else {
+	   		timeouts.push(setTimeout(function(){findEmoji(content);}, 700));  
+	   	}
+
+    });
+
+    function findEmoji(text) {
+    	
+		emojis.some(function(emoji) {
+    		if (foundEmoji === 0) {
+
+	    		emoji.aliases.some(function(alias) {
+
+	    			var regex = new RegExp('\\b' + alias + '\\b');
+
+	    			if(text.search(regex) != -1){
+	    				currentAlias = alias;
+	    				foundEmoji = 1;
+	    				return true;
+	    			}
+
+	    		});
+
+
+	    		if(foundEmoji === 1) {
+	    			replaceText(emoji.emoji, currentAlias);
+	    			foundEmoji = 0;
+		    		return true;
+	    		}
+	    	}
+    	});
+    }
+
+    function replaceText(emoji, alias) {
+    	var content = $('#emoji-text')[0].value;
+
+    	var newContent = content.replace(alias, emoji);
+
+    	$('#emoji-text')[0].value = newContent;
+    }
+</script>
